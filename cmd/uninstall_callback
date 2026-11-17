@@ -1,0 +1,37 @@
+#!/bin/bash
+
+### 卸载回调：必须同时处理 systemd 守护与旧的 nohup 实例。
+### 注意：fnOS 执行的是 appcenter-downloads 里的副本，不只是安装目录。
+
+UNIT="pubhelper-frpc.service"
+UNIT_PATH="/etc/systemd/system/${UNIT}"
+
+# TRIM_PKGVAR 在卸载阶段不一定被导出，这里给个兜底
+PKGVAR="${TRIM_PKGVAR:-/vol1/@appdata/pubhelper}"
+
+# 1) systemd 托管：先停服务并摘掉单元，
+#    否则删了目录它还会按 Restart=always 一直重启
+if [ -f "${UNIT_PATH}" ]; then
+    systemctl stop "${UNIT}" >/dev/null 2>&1
+    systemctl disable "${UNIT}" >/dev/null 2>&1
+    rm -f "${UNIT_PATH}"
+    systemctl daemon-reload >/dev/null 2>&1
+fi
+
+# 2) 旧的 nohup 实例（pid 文件在 frp 子目录下）
+PID_FILE="${PKGVAR}/frp/frpc.pid"
+if [ -r "${PID_FILE}" ]; then
+    pid=$(head -n 1 "${PID_FILE}" | tr -d '[:space:]')
+    if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
+        kill -TERM "${pid}" >/dev/null 2>&1
+        sleep 1
+        kill -0 "${pid}" 2>/dev/null && kill -KILL "${pid}" >/dev/null 2>&1
+    fi
+    rm -f "${PID_FILE}"
+fi
+
+# 3) 兜底：按命令行再扫一遍，防止 pid 文件丢失
+pkill -f "${PKGVAR}/frp/frpc" >/dev/null 2>&1
+pkill -f "pubhelper/server/server.py" >/dev/null 2>&1
+
+exit 0

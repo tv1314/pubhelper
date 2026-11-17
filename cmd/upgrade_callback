@@ -1,0 +1,7 @@
+#!/bin/bash
+
+### Called after upgrade: keep data/config directories in place.
+
+mkdir -p "${TRIM_PKGVAR}/logs" "${TRIM_PKGVAR}/frp" "${TRIM_PKGETC}"
+
+exit 0

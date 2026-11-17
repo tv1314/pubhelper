@@ -1,0 +1,38 @@
+#!/bin/bash
+
+### Called after install: prepare data/config directories.
+
+mkdir -p "${TRIM_PKGVAR}/logs" "${TRIM_PKGVAR}/frp" "${TRIM_PKGETC}"
+
+if [ ! -f "${TRIM_PKGETC}/config.json" ]; then
+    cat > "${TRIM_PKGETC}/config.json" <<'EOF'
+{
+  "cfg_version": 1,
+  "vps": {
+    "host": "",
+    "port": 22,
+    "user": "root",
+    "auth": "password",
+    "password": "",
+    "keyfile": "",
+    "family": "auto"
+  },
+  "domain": "",
+  "email": "",
+  "mode": "port",
+  "services": [],
+  "frp_port": 7000,
+  "direct_expose": true,
+  "basic_auth": false,
+  "basic_user": "nas",
+  "basic_pass": "",
+  "tunnel_token": "",
+  "installed": false,
+  "last_test": null,
+  "last_deploy": null
+}
+EOF
+    chmod 600 "${TRIM_PKGETC}/config.json"
+fi
+
+exit 0

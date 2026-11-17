@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>公网小助手</title>
+<script>
+  if (!location.pathname.endsWith('/')) {
+    location.replace(location.pathname + '/' + location.search + location.hash);
+  }
+</script>
+<link rel="stylesheet" href="style.css?v=36">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">PH</div>
+    <div class="btext">
+      <h1>公网小助手</h1>
+      <div class="sub" id="localInfo">正在读取本机信息…</div>
+    </div>
+  </div>
+  <div class="actions">
+    <span class="chip" id="chipTunnel" hidden></span>
+  </div>
+</header>
+
+<nav class="stepper" id="stepper">
+  <button class="stp" data-step="1"><b>1</b><span>连接服务器</span></button>
+  <i class="arrow"></i>
+  <button class="stp" data-step="2"><b>2</b><span>域名与证书</span></button>
+  <i class="arrow"></i>
+  <button class="stp" data-step="3"><b>3</b><span>端口配置</span></button>
+  <i class="arrow"></i>
+  <button class="stp" data-step="4"><b>4</b><span>部署与状态</span></button>
+</nav>
+
+<div class="restartbar" id="restartBar" hidden>
+  <span>检测到后端代码已更新，<b>需在应用中心重启本应用</b>后才会生效（当前运行的仍是旧版本）。</span>
+  <button class="btn small" id="btnReloadPage">重新加载页面</button>
+</div>
+
+<main class="wrap">
+
+  <!-- ============ 步骤 1 ============ -->
+  <section class="pane" data-pane="1">
+    <div class="card">
+      <div class="cardhead">
+        <h2>公网服务器</h2>
+        <span class="hint">需要一台有公网 IPv4 的 VPS，Ubuntu / Debian / CentOS 系均可</span>
+      </div>
+      <div class="grid">
+        <label class="field">
+          <span>服务器地址</span>
+          <input class="input" id="vpsHost" placeholder="203.0.113.10 或 vps.example.com" autocomplete="off">
+        </label>
+        <label class="field narrow">
+          <span>SSH 端口</span>
+          <input class="input" id="vpsPort" type="number" min="1" max="65535" value="22">
+        </label>
+        <label class="field">
+          <span>登录账号</span>
+          <input class="input" id="vpsUser" placeholder="root" autocomplete="off">
+        </label>
+        <label class="field">
+          <span>认证方式</span>
+          <select class="input" id="vpsAuth">
+            <option value="password">密码</option>
+            <option value="key">私钥文件</option>
+          </select>
+        </label>
+        <label class="field" id="familyField">
+          <span>连接地址族</span>
+          <select class="input" id="vpsFamily">
+            <option value="auto">自动（先 IPv4）</option>
+            <option value="ipv4">强制 IPv4</option>
+            <option value="ipv6">强制 IPv6</option>
+          </select>
+        </label>
+        <label class="field wide" id="pwField">
+          <span>SSH 密码 <i class="tag" id="pwSaved" hidden>已保存</i></span>
+          <input class="input" id="vpsPass" type="password" placeholder="不填则沿用已保存的密码"
+                 autocomplete="new-password">
+        </label>
+        <label class="field wide" id="keyField" hidden>
+          <span>私钥绝对路径</span>
+          <input class="input" id="vpsKey" placeholder="/vol1/@appdata/pubhelper/id_rsa" autocomplete="off">
+        </label>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnTest">测试连接</button>
+        <span class="hint">会登录服务器并读取发行版、架构、已占用端口</span>
+      </div>
+      <div class="probe" id="probeBox" hidden></div>
+    </div>
+  </section>
+
+  <!-- ============ 步骤 2 ============ -->
+  <section class="pane" data-pane="2" hidden>
+    <div class="card">
+      <div class="cardhead">
+        <h2>域名与证书</h2>
+        <span class="hint">留空则只用 http://IP:端口 访问</span>
+      </div>
+      <div class="grid">
+        <label class="field">
+          <span>域名</span>
+          <input class="input" id="domain" placeholder="nas.example.com" autocomplete="off">
+        </label>
+        <label class="chk">
+          <input type="checkbox" id="useHttps">
+          <span>启用 HTTPS 证书</span>
+        </label>
+      </div>
+      <div class="grid" id="emailRow" hidden>
+        <label class="field">
+          <span>证书邮箱</span>
+          <input class="input" id="email" placeholder="you@example.com" autocomplete="off">
+        </label>
+      </div>
+      <div class="notice tips" id="domainNotice">
+        <b class="ntitle">温馨提示</b>
+
+        <div class="tipgrp">
+          <span class="tipname">① 纯 IP 访问</span>
+          <ul>
+            <li>域名留空，访问地址为 <b>http://IP:端口</b></li>
+            <li>不申请证书，配置最简单，适合内网或临时使用</li>
+          </ul>
+        </div>
+
+        <div class="tipgrp">
+          <span class="tipname">② 域名访问</span>
+          <ul>
+            <li>填了域名但未勾选 HTTPS，访问地址为 <b>http://域名:端口</b></li>
+            <li>仍然是明文传输，登录密码有被截获的风险</li>
+          </ul>
+        </div>
+
+        <div class="tipgrp">
+          <span class="tipname">③ 安全域名访问（HTTPS）</span>
+          <ul>
+            <li>填域名并勾选「启用 HTTPS」，访问地址为 <b>https://域名:端口</b></li>
+            <li>自动申请并续期证书，全程加密</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="notice gray">
+        <b class="ntitle">启用 HTTPS 前需要确认</b>
+        <ul>
+          <li>域名 <b>A 记录</b> 已指向公网服务器 IP，且解析已生效</li>
+          <li>已填写证书邮箱，用于接收证书到期通知</li>
+          <li>服务器 <b>80 端口</b> 已在云厂商安全组放行，签发验证必需</li>
+          <li>同一域名签发次数有限制，反复失败请先排查解析与端口</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 步骤 3 ============ -->
+  <section class="pane" data-pane="3" hidden>
+    <div class="card">
+      <div class="cardhead">
+        <h2>端口配置</h2>
+        <div class="cardtools">
+          <button class="btn ghost small" id="btnScanPorts" title="重新扫描本机监听端口">刷新端口</button>
+          <button class="btn ghost small" id="btnPickOk">只选推荐</button>
+          <button class="btn ghost small" id="btnClear">全不选</button>
+        </div>
+      </div>
+      <div class="tablewrap">
+        <table class="ptable">
+          <thead>
+            <tr>
+              <th class="c-chk">发布</th>
+              <th>服务</th>
+              <th class="c-proc">进程</th>
+              <th class="c-num">本地</th>
+              <th class="c-num">公网</th>
+              <th class="c-proto">协议</th>
+              <th>访问地址</th>
+            </tr>
+          </thead>
+          <tbody id="portBody">
+            <tr><td colspan="7" class="empty">正在扫描本机端口…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="row">
+        <input class="input mid" id="addPort" type="number" min="1" max="65535" placeholder="端口">
+        <select class="input tiny" id="addProto">
+          <option value="tcp">tcp</option>
+          <option value="udp">udp</option>
+        </select>
+        <input class="input mid" id="addName" placeholder="服务名（可选）" autocomplete="off">
+        <button class="btn ghost small" id="btnAdd">添加</button>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ============ 步骤 4 ============ -->
+  <section class="pane" data-pane="4" hidden>
+
+    <div class="banner" id="dirtyBanner" hidden>
+      <span>配置已改动，尚未下发到服务器。</span>
+      <button class="btn small" id="btnApply">应用变更</button>
+    </div>
+
+    <div class="card" id="deployCard">
+      <div class="cardhead">
+        <h2>部署</h2>
+        <div class="cardtools">
+          <button class="btn ghost small" id="btnCancel" hidden>取消</button>
+        </div>
+      </div>
+      <div class="steps" id="deploySteps">
+        <div class="hint">还没开始部署。确认前面三步后点右下角「开始部署」。</div>
+      </div>
+      <div class="pre" id="deployLog" hidden></div>
+      <div class="resultbox" id="deployResult" hidden></div>
+    </div>
+
+    <div class="card" id="runCard" hidden>
+      <div class="cardhead">
+        <h2>运行状态</h2>
+      </div>
+
+      <div class="statrow">
+        <div class="stat">
+          <span class="sl">隧道进程</span>
+          <span class="sv" id="stTunnel">—</span>
+        </div>
+        <div class="stat">
+          <span class="sl">运行时长</span>
+          <span class="sv" id="stUptime">—</span>
+        </div>
+        <div class="stat">
+          <span class="sl">证书域名</span>
+          <span class="sv" id="stDomain">—</span>
+        </div>
+        <div class="stat">
+          <span class="sl">控制端口</span>
+          <span class="sv" id="stFrpPort">—</span>
+        </div>
+        <div class="stat">
+          <span class="sl">服务器</span>
+          <span class="sv" id="stHost">—</span>
+        </div>
+        <div class="stat">
+          <span class="sl">上次部署</span>
+          <span class="sv" id="stLast">—</span>
+        </div>
+      </div>
+
+      <div class="btnrow">
+        <button class="btn primary" id="btnStart">启动</button>
+        <button class="btn" id="btnRestart">重启</button>
+        <button class="btn danger" id="btnStop">停止</button>
+        <span class="spacer"></span>
+        <button class="btn danger" id="btnRemove">移除服务</button>
+        <button class="btn ghost" id="btnRefreshPorts">刷新端口</button>
+        <button class="btn ghost" id="btnProbe">检测可达性</button>
+      </div>
+
+      <div class="tablewrap tight">
+        <table class="ptable">
+          <thead>
+            <tr><th>服务</th><th class="c-num">公网</th><th class="c-proto">协议</th><th>访问地址</th><th class="c-state">状态</th></tr>
+          </thead>
+          <tbody id="runBody">
+            <tr><td colspan="5" class="empty">尚未部署</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <details class="logbox">
+        <summary>隧道日志</summary>
+        <div class="pre" id="tunnelLog">—</div>
+      </details>
+    </div>
+  </section>
+
+  <div class="footspace"></div>
+</main>
+
+<footer class="stepbar">
+  <button class="btn ghost" id="btnPrev">上一步</button>
+  <div class="dots" id="dots"></div>
+  <button class="btn primary" id="btnNext">下一步</button>
+</footer>
+
+<div class="toast" id="toast" hidden></div>
+<script src="app.js?v=36"></script>
+</body>
+</html>

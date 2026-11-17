@@ -1,0 +1,17 @@
+{
+    ".url": {
+        "pubhelper.Application": {
+            "title": "公网小助手",
+            "desc": "把内网服务发布到公网服务器",
+            "icon": "images/icon_{0}.png",
+            "type": "iframe",
+            "url": "/app/pubhelper/",
+            "gatewaySocket": "pubhelper.sock",
+            "gatewayPrefix": "/app/pubhelper",
+            "allUsers": false,
+            "control": {
+                "accessPerm": "editable"
+            }
+        }
+    }
+}

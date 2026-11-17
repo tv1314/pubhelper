@@ -1,0 +1,15 @@
+# fnOS 应用的 cmd/* 是 Linux 上执行的 shell 脚本，
+# 一旦被 checkout 成 CRLF，运行时会报 "set: -: invalid option"。
+* text=auto eol=lf
+
+# 二进制文件不做任何换行转换
+*.png binary
+*.PNG binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.fpk binary
+*.gz binary
+*.tar binary
+*.zip binary

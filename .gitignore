@@ -1,0 +1,44 @@
+# ---------- 构建产物 ----------
+*.fpk
+*.tar.gz
+*.tgz
+__pycache__/
+*.py[cod]
+
+# ---------- 运行期数据（只存在于 NAS 上，不入库）----------
+data/
+etc/
+logs/
+ssh/
+frp/
+bundle/*.tar.gz
+info.log
+*.log
+*.db
+*.db-journal
+
+# ---------- 敏感信息，绝不提交 ----------
+*.key
+*.pem
+.seal.key
+*.htpasswd
+askpass_*.sh
+config.local.json
+
+# ---------- 例外：安装包随仓库分发，方便直接下载 ----------
+!pubhelper.fpk
+
+# ---------- 例外：内置 frp 安装包随仓库分发 ----------
+# 11 MB，为的是 clone 后即可离线构建 fpk；文件来自 frp 官方 release，未做改动
+!app/server/bundle/frp_0.52.3_linux_amd64.tar.gz
+
+# ---------- 本地调试脚本（含部署路径与凭据，不入库）----------
+tools/
+icons/deploy*.ps1
+
+# ---------- 编辑器 / 系统 ----------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

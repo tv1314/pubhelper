@@ -1,0 +1,55 @@
+name: Release
+
+# 两种情况：
+#   1) 推 tag 时自动发布（git push origin v0.3.3）
+#   2) 手动触发，补发已有 tag
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "已有 tag（例如 v0.3.2）"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 解析目标 tag
+        id: t
+        run: |
+          TAG="${{ inputs.tag }}"
+          if [ -z "$TAG" ]; then TAG="${GITHUB_REF_NAME}"; fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "目标 tag: $TAG"
+
+      - name: 检出该 tag 的代码
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.t.outputs.tag }}
+
+      - name: 检查安装包与版本
+        run: |
+          test -f pubhelper.fpk || { echo "::error::仓库里缺少 pubhelper.fpk"; exit 1; }
+          ls -lh pubhelper.fpk
+          echo "--- manifest ---"
+          grep -E '^(version|display_name)' manifest
+
+      - name: 创建或更新 Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.t.outputs.tag }}
+        run: |
+          NOTES=$(grep -E '^changelog' manifest | sed 's/^changelog[[:space:]]*=[[:space:]]*//')
+          TITLE="公网小助手 ${TAG#v}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG 已存在，覆盖附件"
+            gh release upload "$TAG" pubhelper.fpk --clobber
+          else
+            echo "创建 Release $TAG"
+            gh release create "$TAG" pubhelper.fpk --title "$TITLE" --notes "$NOTES"
+          fi
