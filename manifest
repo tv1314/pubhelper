@@ -1,5 +1,5 @@
 appname               = pubhelper
-version               = 0.3.2
+version               = 0.3.3
 display_name          = 公网小助手
 desc                  = 四步向导把飞牛上的服务发布到公网：自动配置 frp 反向隧道、nginx 端口反代与 HTTPS 证书，没有公网 IP 也能稳定访问，并支持状态监控、隧道启停与一键回收。
 platform              = x86
@@ -11,4 +11,4 @@ ctl_stop              = true
 os_min_version        = 1.2.0
 desktop_uidir         = ui
 desktop_applaunchname = pubhelper.Application
-changelog             = 0.3.2 更新应用介绍；frpc 由 systemd 托管、日志按天轮转、连接池降低首包延迟
+changelog             = 0.3.3 配色改为飞牛 fnOS 风格（Semi Design 浅色主题，主色 #0066FF），布局与功能不变。 0.3.2 更新应用介绍；frpc 由 systemd 托管、日志按天轮转、连接池降低首包延迟
