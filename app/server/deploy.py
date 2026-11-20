@@ -285,10 +285,15 @@ def nginx_site(svc, domain, tls):
         "        proxy_http_version 1.1;",
         "        proxy_set_header Upgrade $http_upgrade;",
         "        proxy_set_header Connection $ph_conn;",
-        "        proxy_set_header Host $host;",
+        # Host 带上端口：源站在非 443 端口时，应用拼绝对地址才不会丢端口
+        "        proxy_set_header Host $http_host;",
+        # 真实 IP：TCP 层经过 frp 隧道 + Docker 端口映射后只剩 127.0.0.1 / 172.17.0.1，
+        # 容器内的应用只能从下面这几个请求头拿到访客地址（需要应用侧信任这些头）
         "        proxy_set_header X-Real-IP $remote_addr;",
         "        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;",
         "        proxy_set_header X-Forwarded-Proto $scheme;",
+        "        proxy_set_header X-Forwarded-Host $http_host;",
+        "        proxy_set_header X-Forwarded-Port $server_port;",
         "        proxy_buffering off;",
         "        proxy_request_buffering off;",
         "        proxy_read_timeout 3600s;",

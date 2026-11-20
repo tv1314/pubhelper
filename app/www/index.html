@@ -9,7 +9,7 @@
     location.replace(location.pathname + '/' + location.search + location.hash);
   }
 </script>
-<link rel="stylesheet" href="style.css?v=36">
+<link rel="stylesheet" href="style.css?v=37">
 </head>
 <body>
 
@@ -196,6 +196,17 @@
         </select>
         <input class="input mid" id="addName" placeholder="服务名（可选）" autocomplete="off">
         <button class="btn ghost small" id="btnAdd">添加</button>
+
+      <div class="notice gray">
+        <b class="ntitle">源站怎么拿到访客真实 IP</b>
+        <ul>
+          <li>公网服务器 nginx 会把访客地址写进 <b>X-Real-IP</b> / <b>X-Forwarded-For</b>；
+              隧道与 Docker 端口映射会把 TCP 源地址换成 127.0.0.1 / 172.17.0.1，这一层无法还原</li>
+          <li>Jellyfin / Emby：控制台 → 网络 → <b>已知代理</b>，填 <b>127.0.0.1</b>
+              （Docker 桥接模式再填 <b>172.17.0.1</b>），保存后重启应用</li>
+          <li>源站自带 nginx：加 <b>set_real_ip_from 127.0.0.1; real_ip_header X-Forwarded-For;</b></li>
+        </ul>
+      </div>
       </div>
     </div>
 
